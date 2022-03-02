@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)https://fondosmil.com/pastelerias -->
+<html lang="es" data-lt-installed="true"><script src="./Fondos de pantalla de pastelerias - FondosMil_files/f.txt"></script><script>
+    window[Symbol.for('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')] = new (class PostClient {
+    constructor(name, destination) {
+        this.name = name;
+        this.destination = destination;
+        this.serverListeners = {};
+        this.bgRequestsListeners = {};
+        this.bgEventsListeners = {};
+        window.addEventListener('message', (message) => {
+            const data = message.data;
+            const isNotForMe = !(data.destination && data.destination === this.name);
+            const hasNotEventProp = !data.event;
+            if (isNotForMe || hasNotEventProp) {
+                return;
+            }
+            if (data.event === 'MARIO_POST_SERVER__BG_RESPONSE') {
+                const response = data.args;
+                if (this.hasBgRequestListener(response.requestId)) {
+                    try {
+                        this.bgRequestsListeners[response.requestId](response.response);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                    delete this.bgRequestsListeners[response.requestId];
+                }
+            }
+            else if (data.event === 'MARIO_POST_SERVER__BG_EVENT') {
+                const response = data.args;
+                if (this.hasBgEventListener(response.event)) {
+                    try {
+                        this.bgEventsListeners[data.id](response.payload);
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
+                }
+            }
+            else if (this.hasServerListener(data.event)) {
+                try {
+                    this.serverListeners[data.event](data.args);
+                }
+                catch (e) {
+                    console.log(e);
+                }
+            }
+            else {
+                console.log(`event not handled: ${data.event}`);
+            }
+        });
+    }
+    emitToServer(event, args) {
+        const id = this.generateUIID();
+        const message = {
+            args,
+            destination: this.destination,
+            event,
+            id,
+        };
+        window.postMessage(message, location.origin);
+        return id;
+    }
+    emitToBg(bgEventName, args) {
+        const requestId = this.generateUIID();
+        const request = { bgEventName, requestId, args };
+        this.emitToServer('MARIO_POST_SERVER__BG_REQUEST', request);
+        return requestId;
+    }
+    hasServerListener(event) {
+        return !!this.serverListeners[event];
+    }
+    hasBgRequestListener(requestId) {
+        return !!this.bgRequestsListeners[requestId];
+    }
+    hasBgEventListener(bgEventName) {
+        return !!this.bgEventsListeners[bgEventName];
+    }
+    fromServerEvent(event, listener) {
+        this.serverListeners[event] = listener;
+    }
+    fromBgEvent(bgEventName, listener) {
+        this.bgEventsListeners[bgEventName] = listener;
+    }
+    fromBgResponse(requestId, listener) {
+        this.bgRequestsListeners[requestId] = listener;
+    }
+    generateUIID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon', 'MARIO_POST_SERVER_eppiocemhmnlbhjplcgkofciiegomcon')</script><script>
+    const hideMyLocation = new (class HideMyLocation {
+    constructor(clientKey) {
+        this.clientKey = clientKey;
+        this.watchIDs = {};
+        this.client = window[Symbol.for(clientKey)];
+        const getCurrentPosition = navigator.geolocation.getCurrentPosition;
+        const watchPosition = navigator.geolocation.watchPosition;
+        const clearWatch = navigator.geolocation.clearWatch;
+        const self = this;
+        navigator.geolocation.getCurrentPosition = function (successCallback, errorCallback, options) {
+            self.handle(getCurrentPosition, 'GET', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.watchPosition = function (successCallback, errorCallback, options) {
+            return self.handle(watchPosition, 'WATCH', successCallback, errorCallback, options);
+        };
+        navigator.geolocation.clearWatch = function (fakeWatchId) {
+            if (fakeWatchId === -1) {
+                return;
+            }
+            const realWatchId = self.watchIDs[fakeWatchId];
+            delete self.watchIDs[fakeWatchId];
+            return clearWatch.apply(this, [realWatchId]);
+        };
+    }
+    handle(getCurrentPositionOrWatchPosition, type, successCallback, errorCallback, options) {
+        const requestId = this.client.emitToBg('HIDE_MY_LOCATION__GET_LOCATION');
+        let fakeWatchId = this.getRandomInt(0, 100000);
+        this.client.fromBgResponse(requestId, (response) => {
+            if (response.enabled) {
+                if (response.status === 'SUCCESS') {
+                    const position = this.map(response);
+                    successCallback(position);
+                }
+                else {
+                    const error = this.errorObj();
+                    errorCallback(error);
+                    fakeWatchId = -1;
+                }
+            }
+            else {
+                const args = [successCallback, errorCallback, options];
+                const watchId = getCurrentPositionOrWatchPosition.apply(navigator.geolocation, args);
+                if (type === 'WATCH') {
+                    this.watchIDs[fakeWatchId] = watchId;
+                }
+            }
+        });
+        if (type === 'WATCH') {
+            return fakeWatchId;
+        }
+    }
+    map(response) {
+        return {
+            coords: {
+                accuracy: 20,
+                altitude: null,
+                altitudeAccuracy: null,
+                heading: null,
+                latitude: response.latitude,
+                longitude: response.longitude,
+                speed: null,
+            },
+            timestamp: Date.now(),
+        };
+    }
+    errorObj() {
+        return {
+            code: 1,
+            message: 'User denied Geolocation',
+        };
+    }
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+})('MARIO_POST_CLIENT_eppiocemhmnlbhjplcgkofciiegomcon')
+  </script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <title>Fondos de pantalla de pastelerias - FondosMil</title>
+    <meta name="description" content="Los mejores  fondos de pastelerias gratis para descargar. Wallpapers HD de pastelerias.">
+		<link rel="icon" type="image/png" href="https://fondosmil.com/favicon.png">
+    <meta name="csrf-token" content="7445d390cf4661db050157c7ae8c1e6b0e4bf8872613df2507e7ee4982cd994e">
+    <link async="" rel="stylesheet" type="text/css" href="./Fondos de pantalla de pastelerias - FondosMil_files/styles.css">
+    <script>
+      window.appCallbacks = [];
+    </script>
+		
+<meta http-equiv="origin-trial" content="AxujKG9INjsZ8/gUq8+dTruNvk7RjZQ1oFhhgQbcTJKDnZfbzSTE81wvC2Hzaf3TW4avA76LTZEMdiedF1vIbA4AAABueyJvcmlnaW4iOiJodHRwczovL2ltYXNkay5nb29nbGVhcGlzLmNvbTo0NDMiLCJmZWF0dXJlIjoiVHJ1c3RUb2tlbnMiLCJleHBpcnkiOjE2NTI3NzQ0MDAsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="><meta http-equiv="origin-trial" content="Azuce85ORtSnWe1MZDTv68qpaW3iHyfL9YbLRy0cwcCZwVnePnOmkUJlG8HGikmOwhZU22dElCcfrfX2HhrBPAkAAAB7eyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiVHJ1c3RUb2tlbnMiLCJleHBpcnkiOjE2NTI3NzQ0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A16nvcdeoOAqrJcmjLRpl1I6f3McDD8EfofAYTt/P/H4/AWwB99nxiPp6kA0fXoiZav908Z8etuL16laFPUdfQsAAACBeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiVHJ1c3RUb2tlbnMiLCJleHBpcnkiOjE2NTI3NzQ0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="AxBHdr0J44vFBQtZUqX9sjiqf5yWZ/OcHRcRMN3H9TH+t90V/j3ENW6C8+igBZFXMJ7G3Pr8Dd13632aLng42wgAAACBeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiVHJ1c3RUb2tlbnMiLCJleHBpcnkiOjE2NTI3NzQ0MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9"><meta http-equiv="origin-trial" content="A88BWHFjcawUfKU3lIejLoryXoyjooBXLgWmGh+hNcqMK44cugvsI5YZbNarYvi3roc1fYbHA1AVbhAtuHZflgEAAAB2eyJvcmlnaW4iOiJodHRwczovL2dvb2dsZS5jb206NDQzIiwiZmVhdHVyZSI6IlRydXN0VG9rZW5zIiwiZXhwaXJ5IjoxNjUyNzc0NDAwLCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlfQ=="><meta http-equiv="origin-trial" content="A8FHS1NmdCwGqD9DwOicnHHY+y27kdWfxKa0YHSGDfv0CSpDKRHTQdQmZVPDUdaFWUsxdgVxlwAd6o+dhJykPA0AAACWeyJvcmlnaW4iOiJodHRwczovL2RvdWJsZWNsaWNrLm5ldDo0NDMiLCJmZWF0dXJlIjoiQ29udmVyc2lvbk1lYXN1cmVtZW50IiwiZXhwaXJ5IjoxNjQzMTU1MTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlLCJ1c2FnZSI6InN1YnNldCJ9"><meta http-equiv="origin-trial" content="A8zdXi6dr1hwXEUjQrYiyYQGlU3557y5QWDnN0Lwgj9ePt66XMEvNkVWOEOWPd7TP9sBQ25X0Q15Lr1Nn4oGFQkAAACceyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXN5bmRpY2F0aW9uLmNvbTo0NDMiLCJmZWF0dXJlIjoiQ29udmVyc2lvbk1lYXN1cmVtZW50IiwiZXhwaXJ5IjoxNjQzMTU1MTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlLCJ1c2FnZSI6InN1YnNldCJ9"><meta http-equiv="origin-trial" content="A4/Htern2udN9w3yJK9QgWQxQFruxOXsXL7cW60DyCl0EZFGCSme/J33Q/WzF7bBkVvhEWDlcBiUyZaim5CpFQwAAACceyJvcmlnaW4iOiJodHRwczovL2dvb2dsZXRhZ3NlcnZpY2VzLmNvbTo0NDMiLCJmZWF0dXJlIjoiQ29udmVyc2lvbk1lYXN1cmVtZW50IiwiZXhwaXJ5IjoxNjQzMTU1MTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZSwiaXNUaGlyZFBhcnR5Ijp0cnVlLCJ1c2FnZSI6InN1YnNldCJ9"><script src="./Fondos de pantalla de pastelerias - FondosMil_files/pubads_impl_2022021701.js.descarga" async=""></script><link rel="preload" href="./Fondos de pantalla de pastelerias - FondosMil_files/f(1).txt" as="script"><script type="text/javascript" src="./Fondos de pantalla de pastelerias - FondosMil_files/f(1).txt"></script><link rel="preload" href="./Fondos de pantalla de pastelerias - FondosMil_files/f(2).txt" as="script"><script type="text/javascript" src="./Fondos de pantalla de pastelerias - FondosMil_files/f(2).txt"></script></head>
+<body class="pushable dimmable dimmed">
+	<!-- Sidebar Menu -->
+    <div class="ui vertical inverted right sidebar menu">
+        <a class="item header" style="font-size: 16px;" href="https://fondosmil.com/">Inicio</a>
+												<div class="item">
+	        <div class="header title" style="font-size: 16px;">Más populares</div>
+	        <div class="menu content">
+	            <div class="flexbox" style="padding-top: 5px;padding-bottom: 5px">
+				    	<div class="column">
+				        <div class="ui category_sidebar link list">
+	                            		                 <a title="Fondos de pantalla 4k" href="https://fondosmil.com/4k" class="category_sidebar v2 item">Fondos 4k</a>
+		                         		                 <a title="Fondos de pantalla blanco liso" href="https://fondosmil.com/blanco-liso" class="category_sidebar v2 item">Fondos blanco liso</a>
+		                         		                 <a title="Fondos de pantalla negro" href="https://fondosmil.com/negro" class="category_sidebar v2 item">Fondos negro</a>
+		                         		                 <a title="Fondos de pantalla de Naruto" href="https://fondosmil.com/naruto" class="category_sidebar v2 item">Fondos de Naruto</a>
+		                         		                 <a title="Fondos de pantalla  Anime" href="https://fondosmil.com/anime" class="category_sidebar v2 item">Fondos  Anime</a>
+		                         	                    </div>
+	    							</div>
+									</div>
+	            </div>
+	        </div>
+					
+					<div class="item">
+		        <div class="header title" style="font-size: 16px;">Más recientes</div>
+		        <div class="menu content">
+		            <div class="flexbox" style="padding-top: 5px;padding-bottom: 5px">
+					    	<div class="column">
+					        <div class="ui category_sidebar link list">
+		                            			                 <a title="Fondos de pantalla de la estación espacial" href="https://fondosmil.com/estacion-espacial" class="category_sidebar v2 item">Fondos de la estación espacial</a>
+			                         			                 <a title="Fondos de pantalla de Brooklyn Nine-Nine" href="https://fondosmil.com/brooklyn-nine-nine" class="category_sidebar v2 item">Fondos de Brooklyn Nine-Nine</a>
+			                         			                 <a title="Fondos de pantalla del hombre lobo" href="https://fondosmil.com/hombre-lobo" class="category_sidebar v2 item">Fondos del hombre lobo</a>
+			                         			                 <a title="Fondos de pantalla de God of War 3" href="https://fondosmil.com/god-of-war-3" class="category_sidebar v2 item">Fondos de God of War 3</a>
+			                         			                 <a title="Fondos de pantalla de Resident Evil 6" href="https://fondosmil.com/resident-evil-6" class="category_sidebar v2 item">Fondos de Resident Evil 6</a>
+			                         			                 <a title="Fondos de pantalla de estanteria" href="https://fondosmil.com/estanteria" class="category_sidebar v2 item">Fondos de estanteria</a>
+			                         			                 <a title="Fondos de pantalla de Naruto y Sakura" href="https://fondosmil.com/naruto-y-sakura" class="category_sidebar v2 item">Fondos de Naruto y Sakura</a>
+			                         			                 <a title="Fondos de pantalla de Far Cry 3" href="https://fondosmil.com/far-cry-3" class="category_sidebar v2 item">Fondos de Far Cry 3</a>
+			                         			                 <a title="Fondos de pantalla de Molang" href="https://fondosmil.com/molang" class="category_sidebar v2 item">Fondos de Molang</a>
+			                         			                 <a title="Fondos de pantalla de Grand Theft Auto" href="https://fondosmil.com/grand-theft-auto" class="category_sidebar v2 item">Fondos de Grand Theft Auto</a>
+			                         		                    </div>
+		    							</div>
+										</div>
+		            </div>
+		        </div>
+         
+        <a class="item header" style="font-size: 16px;" href="https://fondosmil.com/contacto">Contacto</a>
+        <a class="item header" style="font-size: 16px;" href="https://fondosmil.com/terminos">Términos de Uso</a>
+				<a class="item header" style="font-size: 16px;" href="https://fondosmil.com/privacidad">Política de Privacidad</a>
+        
+  
+    </div>
+
+    <div class="fixed main_menu">
+        <div class="ui equal width middle aligned centered grid pad_horisont20">
+            <div class="middle aligned equal width row">
+                <div class="item" style="padding-left: 10px">
+                    <a href="https://fondosmil.com/" class="ui header" style="font-size: 16px; font-weight: bold; line-height: 2.3;">FondosMil</a>
+                </div>
+                <div class="fluid search column">
+                    <div class="ui fluid icon input">
+                        <form id="search_form" method="GET" action="https://fondosmil.com/search"></form>
+                        <input id="search_input" form="search_form" name="q" type="text" placeholder="Buscar fondos de pantalla..." style="background-color: #F1F1F1; border: 0px;">
+                        <i class="search icon"></i>
+                    </div>
+                </div>
+                <div class="item custom computer only">
+                    <a id="collection_popup" class="default_link" style="">
+    Categorías&nbsp;&nbsp;▾
+</a>
+<div class="ui flowing popup categories_menu_web">
+    <div class="ui two column relaxed grid">
+		                    <div class="column">
+                <div class="ui link list">
+																		<a class="item" href="https://fondosmil.com/c/amor-relaciones" style="color: black">Amor y relaciones</a>
+																		<a class="item" href="https://fondosmil.com/c/animales" style="color: black">Animales</a>
+																		<a class="item" href="https://fondosmil.com/c/anime" style="color: black">Anime</a>
+																		<a class="item" href="https://fondosmil.com/c/arte" style="color: black">Arte</a>
+																		<a class="item" href="https://fondosmil.com/c/calendario" style="color: black">Calendario</a>
+																		<a class="item" href="https://fondosmil.com/c/celebraciones" style="color: black">Celebraciones</a>
+																		<a class="item" href="https://fondosmil.com/c/ciudades-paises" style="color: black">Ciudades y paises</a>
+																		<a class="item" href="https://fondosmil.com/c/coches" style="color: black">Coches</a>
+																		<a class="item" href="https://fondosmil.com/c/colores" style="color: black">Colores</a>
+																		<a class="item" href="https://fondosmil.com/c/comida" style="color: black">Comida</a>
+																		<a class="item" href="https://fondosmil.com/c/deporte" style="color: black">Deporte</a>
+																		<a class="item" href="https://fondosmil.com/c/dispositivos" style="color: black">Dispositivos</a>
+																		<a class="item" href="https://fondosmil.com/c/emociones" style="color: black">Emociones</a>
+																		<a class="item" href="https://fondosmil.com/c/estilos" style="color: black">Estilos</a>
+																		<a class="item" href="https://fondosmil.com/c/famosos" style="color: black">Famosos</a>
+																		<a class="item" href="https://fondosmil.com/c/fantasia" style="color: black">Fantasía</a>
+																		<a class="item" href="https://fondosmil.com/c/frases" style="color: black">Frases</a>
+																		<a class="item" href="https://fondosmil.com/c/futbol" style="color: black">Fútbol</a>
+																	</div>
+            </div>
+						<div class="column">
+                <div class="ui link list">
+																		<a class="item" href="https://fondosmil.com/c/graficos-dibujos" style="color: black">Gráficos y dibujos</a>
+																		<a class="item" href="https://fondosmil.com/c/juegos" style="color: black">Juegos</a>
+																		<a class="item" href="https://fondosmil.com/c/marcas" style="color: black">Marcas</a>
+																		<a class="item" href="https://fondosmil.com/c/motor" style="color: black">Motor</a>
+																		<a class="item" href="https://fondosmil.com/c/musica" style="color: black">Música</a>
+																		<a class="item" href="https://fondosmil.com/c/naturaleza" style="color: black">Naturaleza</a>
+																		<a class="item" href="https://fondosmil.com/c/navidad" style="color: black">Navidad</a>
+																		<a class="item" href="https://fondosmil.com/c/objetos" style="color: black">Objetos</a>
+																		<a class="item" href="https://fondosmil.com/c/otros" style="color: black">Otros</a>
+																		<a class="item" href="https://fondosmil.com/c/para-chicas" style="color: black">Para chicas</a>
+																		<a class="item" href="https://fondosmil.com/c/patrones" style="color: black">Patrones</a>
+																		<a class="item" href="https://fondosmil.com/c/pel%C3%ADculas" style="color: black">Películas</a>
+																		<a class="item" href="https://fondosmil.com/c/plataforma" style="color: black">Plataformas</a>
+																		<a class="item" href="https://fondosmil.com/c/religion" style="color: black">Religión</a>
+																		<a class="item" href="https://fondosmil.com/c/resoluciones" style="color: black">Resoluciones</a>
+																		<a class="item" href="https://fondosmil.com/c/series" style="color: black">Series</a>
+																		<a class="item" href="https://fondosmil.com/c/superheroes" style="color: black">Superhéroes</a>
+																		<a class="item" href="https://fondosmil.com/c/texturas" style="color: black">Texturas</a>
+																		<a class="item" href="https://fondosmil.com/c/universo" style="color: black">Universo</a>
+																	</div>
+            </div>
+            </div>
+</div>
+                </div>
+                <div class="item" style="padding-right: 6px; padding-top: 1px">
+                    <a style="font-size: 20px;" href="javascript:void(0)" class="toc">
+                        <span class="custom computer only">
+                              <i class="icon black icon_hamburger"></i>
+                        </span>
+                        <span class="custom mobile only">
+                            <i class="icons">
+                              <i class="icon black icon_hamburger"></i>
+                              <i class="icon black icon_hamburger red_dot"></i>
+                            </i>
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="pusher" style="padding-top: 88px">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fondos de pantalla de pastelerias - FondosMil">
+    <meta name="twitter:description" content="Los mejores fondos de pastelerias gratis para descargar! Disfruta de los mejores &lt;?=?&gt; fondos de pantalla de pastelerias para el escritorio de tu ordenador o portátil.">
+
+    <style>
+        ._h2 {
+            font-size: 24px;
+        }
+    </style>
+    <div class="ui grid container">
+        <div class="row">
+            <div class="center aligned column">
+                <h1 itemprop="name" class="ui centered aligned">Fondos de pantalla de pastelerias</h1>
+								                <p class="h3_like_size" style="padding-top: 5px; margin-bottom: 5px;">
+                    ¡Los mejores fondos de pastelerias gratis para descargar! <br>Disfruta de los siguientes 46 fondos de pantalla de pastelerias para tu móvil o escritorio.
+                </p>
+								<p>Ver más fondos de <a href="https://fondosmil.com/c/otros">Otros</a>.</p>                <div style="padding-bottom: 20px; margin-top: 10px; text-align: center;">
+                  <script async="async" src="./Fondos de pantalla de pastelerias - FondosMil_files/gpt.js.descarga"></script>
+                  <script>
+                  var gptadslots = [];
+                  var googletag = googletag || {cmd:[]};
+                  </script>
+                  <script>
+                  googletag.cmd.push(function() {
+                  var mapping1 = googletag.sizeMapping()
+                  .addSize([1024, 500], [[970, 90], [970, 250], [728, 90]])
+                  .addSize([768, 400], [[728, 90]])
+                  .addSize([470, 400], [[300, 250]])
+                  .addSize([360, 400], [[320, 50], [320, 100]])
+                  .addSize([0, 0], [[320, 50], [320, 100]])
+                  .build();
+                  //Adslot 1 declaration
+                  gptadslots.push(googletag.defineSlot('/360613911/Redmas2019Display', [[728,90]], 'div-gpt-ad-8750488-1')
+                  .defineSizeMapping(mapping1)
+                  .addService(googletag.pubads()));
+                  googletag.pubads().enableSingleRequest();
+                  googletag.enableServices();
+                  });
+                  </script>
+                  <!-- End GPT Async Tag -->
+                  <!-- Async AdSlot 1 for Ad unit 'Redmas2019Display' ### Size: [[728,90]] -->
+                  <!-- Adslot's refresh function: googletag.pubads().refresh([gptadslots[0]]) -->
+                  <div id="div-gpt-ad-8750488-1" style="">
+                  <script>
+                  googletag.cmd.push(function() { googletag.display('div-gpt-ad-8750488-1'); });
+                  </script>
+                  <div id="google_ads_iframe_/360613911/Redmas2019Display_0__container__" style="border: 0pt none; width: 970px; height: 0px;"></div></div>
+                </div>
+                <div style="padding-bottom: 20px;">
+
+                </div>
+								
+						                </div>
+        </div>
+    </div>
+		
+	  
+		    
+		<div class="flexbox column single_image pad_horisont15">
+				                        <meta name="twitter:image" content="/fondo/48040.jpg">
+												
+				                <div id="90405" data-fullimg="/fondo/90405.png" data-or="1242x2208" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90405" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390405&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90405" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90405" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90405" alt="Fondo de pantalla de  1242x2208" data-src="/fondo/90405.png" src="./Fondos de pantalla de pastelerias - FondosMil_files/90405.png">
+		                    <div class="image_cap">
+		                        <span class="color_white">1242x2208 - Fondo de pantalla de  1242x2208. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90405" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390405&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90405" target="_blank" data-id="90405" data-download="/download/pastelerias-90405" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="48040" data-fullimg="/fondo/48040.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48040" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348040&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-48040" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-48040" target="_blank">
+		                    <img class="thumb ads_popup" data-id="48040" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/48040.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/48040.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Wallpaper para escritorio HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48040" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348040&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-48040" target="_blank" data-id="48040" data-download="/download/pastelerias-48040" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90412" data-fullimg="/fondo/90412.jpg" data-or="2560x1440" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90412" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390412&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90412" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90412" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90412" alt="Fondo de pantalla de  2560x1440" data-src="/fondo/90412.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90412.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2560x1440 - Fondo de pantalla de  2560x1440. Fondo para computadora 2K de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90412" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390412&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90412" target="_blank" data-id="90412" data-download="/download/pastelerias-90412" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90416" data-fullimg="/fondo/90416.jpg" data-or="2560x1600" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90416" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390416&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90416" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90416" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90416" alt="Fondo de pantalla de  2560x1600" data-src="/fondo/90416.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90416.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2560x1600 - Fondo de pantalla de  2560x1600. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90416" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390416&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90416" target="_blank" data-id="90416" data-download="/download/pastelerias-90416" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="73622" data-fullimg="/fondo/73622.jpg" data-or="1024x768" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#73622" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2373622&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-73622" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-73622" target="_blank">
+		                    <img class="thumb ads_popup" data-id="73622" alt="Fondo de pantalla de  1024x768" data-src="/fondo/73622.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/73622.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1024x768 - Fondo de pantalla de  1024x768. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#73622" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2373622&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-73622" target="_blank" data-id="73622" data-download="/download/pastelerias-73622" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90421" data-fullimg="/fondo/90421.jpg" data-or="3840x2160" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90421" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390421&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90421" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90421" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90421" alt="Fondo de pantalla de  3840x2160" data-src="/fondo/90421.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90421.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">3840x2160 - Fondo de pantalla de  3840x2160. Fondo para computadora 4K Ultra HD de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90421" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390421&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90421" target="_blank" data-id="90421" data-download="/download/pastelerias-90421" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90434" data-fullimg="/fondo/90434.jpg" data-or="2560x1600" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90434" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390434&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90434" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90434" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90434" alt="Fondo de pantalla de  2560x1600" data-src="/fondo/90434.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90434.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2560x1600 - Fondo de pantalla de  2560x1600. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90434" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390434&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90434" target="_blank" data-id="90434" data-download="/download/pastelerias-90434" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90445" data-fullimg="/fondo/90445.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90445" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390445&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90445" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90445" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90445" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90445.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90445.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo de pantalla HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90445" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390445&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90445" target="_blank" data-id="90445" data-download="/download/pastelerias-90445" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="48123" data-fullimg="/fondo/48123.jpg" data-or="1600x900" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48123" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348123&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-48123" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-48123" target="_blank">
+		                    <img class="thumb ads_popup" data-id="48123" alt="Fondo de pantalla de  1600x900" data-src="/fondo/48123.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/48123.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1600x900 - Fondo de pantalla de  1600x900. Fondo para computadora de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48123" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348123&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-48123" target="_blank" data-id="48123" data-download="/download/pastelerias-48123" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90447" data-fullimg="/fondo/90447.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90447" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390447&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90447" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90447" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90447" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90447.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90447.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo para computadora HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90447" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390447&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90447" target="_blank" data-id="90447" data-download="/download/pastelerias-90447" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90454" data-fullimg="/fondo/90454.png" data-or="1242x2208" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90454" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390454&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90454" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90454" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90454" alt="Fondo de pantalla de  1242x2208" data-src="/fondo/90454.png" src="./Fondos de pantalla de pastelerias - FondosMil_files/90454.png">
+		                    <div class="image_cap">
+		                        <span class="color_white">1242x2208 - Fondo de pantalla de  1242x2208. Fondo para móvil de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90454" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390454&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90454" target="_blank" data-id="90454" data-download="/download/pastelerias-90454" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="48038" data-fullimg="/fondo/48038.jpg" data-or="1914x2880" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48038" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348038&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-48038" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-48038" target="_blank">
+		                    <img class="thumb ads_popup" data-id="48038" alt="Fondo de pantalla de  1914x2880" data-src="/fondo/48038.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/48038.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1914x2880 - Fondo de pantalla de  1914x2880. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48038" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348038&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-48038" target="_blank" data-id="48038" data-download="/download/pastelerias-48038" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90468" data-fullimg="/fondo/90468.jpg" data-or="2560x1600" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90468" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390468&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90468" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90468" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90468" alt="Fondo de pantalla de  2560x1600" data-src="/fondo/90468.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90468.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2560x1600 - Fondo de pantalla de  2560x1600. Wallpaper de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90468" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390468&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90468" target="_blank" data-id="90468" data-download="/download/pastelerias-90468" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="48084" data-fullimg="/fondo/48084.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48084" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348084&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-48084" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-48084" target="_blank">
+		                    <img class="thumb ads_popup" data-id="48084" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/48084.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/48084.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo de pantalla HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48084" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348084&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-48084" target="_blank" data-id="48084" data-download="/download/pastelerias-48084" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90472" data-fullimg="/fondo/90472.jpg" data-or="1080x1920" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90472" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390472&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90472" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90472" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90472" alt="Fondo de pantalla de  1080x1920" data-src="/fondo/90472.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90472.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1080x1920 - Fondo de pantalla de  1080x1920. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90472" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390472&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90472" target="_blank" data-id="90472" data-download="/download/pastelerias-90472" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90475" data-fullimg="/fondo/90475.jpg" data-or="1024x768" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90475" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390475&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90475" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90475" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90475" alt="Fondo de pantalla de  1024x768" data-src="/fondo/90475.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90475.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1024x768 - Fondo de pantalla de  1024x768. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90475" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390475&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90475" target="_blank" data-id="90475" data-download="/download/pastelerias-90475" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90494" data-fullimg="/fondo/90494.jpg" data-or="3200x2400" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90494" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390494&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90494" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90494" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90494" alt="Fondo de pantalla de  3200x2400" data-src="/fondo/90494.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90494.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">3200x2400 - Fondo de pantalla de  3200x2400. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90494" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390494&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90494" target="_blank" data-id="90494" data-download="/download/pastelerias-90494" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90504" data-fullimg="/fondo/90504.jpg" data-or="6000x4000" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90504" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390504&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90504" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90504" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90504" alt="Fondo de pantalla de  6000x4000" data-src="/fondo/90504.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90504.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">6000x4000 - Fondo de pantalla de  6000x4000. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90504" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390504&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90504" target="_blank" data-id="90504" data-download="/download/pastelerias-90504" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90508" data-fullimg="/fondo/90508.jpg" data-or="2000x1354" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90508" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390508&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90508" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90508" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90508" alt="Fondo de pantalla de  2000x1354" data-src="/fondo/90508.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90508.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2000x1354 - Fondo de pantalla de  2000x1354. Wallpaper de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90508" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390508&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90508" target="_blank" data-id="90508" data-download="/download/pastelerias-90508" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="48116" data-fullimg="/fondo/48116.jpg" data-or="1024x768" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48116" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348116&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-48116" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-48116" target="_blank">
+		                    <img class="thumb ads_popup" data-id="48116" alt="Fondo de pantalla de  1024x768" data-src="/fondo/48116.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/48116.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1024x768 - Fondo de pantalla de  1024x768. Fondo para computadora de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48116" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348116&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-48116" target="_blank" data-id="48116" data-download="/download/pastelerias-48116" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90513" data-fullimg="/fondo/90513.jpg" data-or="1152x2048" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90513" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390513&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90513" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90513" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90513" alt="Fondo de pantalla de  1152x2048" data-src="/fondo/90513.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90513.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1152x2048 - Fondo de pantalla de  1152x2048. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90513" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390513&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90513" target="_blank" data-id="90513" data-download="/download/pastelerias-90513" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90514" data-fullimg="/fondo/90514.jpg" data-or="1920x1200" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90514" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390514&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90514" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90514" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90514" alt="Fondo de pantalla de  1920x1200" data-src="/fondo/90514.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90514.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1200 - Fondo de pantalla de  1920x1200. Fondo para computadora de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90514" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390514&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90514" target="_blank" data-id="90514" data-download="/download/pastelerias-90514" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90526" data-fullimg="/fondo/90526.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90526" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390526&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90526" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90526" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90526" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90526.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90526.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Imágen HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90526" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390526&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90526" target="_blank" data-id="90526" data-download="/download/pastelerias-90526" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90613" data-fullimg="/fondo/90613.jpg" data-or="2048x2048" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90613" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390613&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90613" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90613" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90613" alt="Fondo de pantalla de  2048x2048" data-src="/fondo/90613.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90613.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2048x2048 - Fondo de pantalla de  2048x2048. Wallpaper de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90613" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390613&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90613" target="_blank" data-id="90613" data-download="/download/pastelerias-90613" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90615" data-fullimg="/fondo/90615.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90615" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390615&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90615" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90615" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90615" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90615.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90615.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo para computadora HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90615" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390615&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90615" target="_blank" data-id="90615" data-download="/download/pastelerias-90615" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90618" data-fullimg="/fondo/90618.png" data-or="1600x900" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90618" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390618&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90618" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90618" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90618" alt="Fondo de pantalla de  1600x900" data-src="/fondo/90618.png" src="./Fondos de pantalla de pastelerias - FondosMil_files/90618.png">
+		                    <div class="image_cap">
+		                        <span class="color_white">1600x900 - Fondo de pantalla de  1600x900. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90618" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390618&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90618" target="_blank" data-id="90618" data-download="/download/pastelerias-90618" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="48236" data-fullimg="/fondo/48236.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48236" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348236&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-48236" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-48236" target="_blank">
+		                    <img class="thumb ads_popup" data-id="48236" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/48236.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/48236.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo para computadora HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#48236" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2348236&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-48236" target="_blank" data-id="48236" data-download="/download/pastelerias-48236" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90630" data-fullimg="/fondo/90630.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90630" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390630&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90630" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90630" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90630" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90630.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90630.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo para computadora HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90630" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390630&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90630" target="_blank" data-id="90630" data-download="/download/pastelerias-90630" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90638" data-fullimg="/fondo/90638.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90638" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390638&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90638" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90638" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90638" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90638.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90638.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo de pantalla HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90638" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390638&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90638" target="_blank" data-id="90638" data-download="/download/pastelerias-90638" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90646" data-fullimg="/fondo/90646.png" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90646" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390646&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90646" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90646" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90646" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90646.png" src="./Fondos de pantalla de pastelerias - FondosMil_files/90646.png">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Wallpaper para escritorio HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90646" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390646&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90646" target="_blank" data-id="90646" data-download="/download/pastelerias-90646" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90653" data-fullimg="/fondo/90653.jpg" data-or="1080x1920" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90653" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390653&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90653" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90653" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90653" alt="Fondo de pantalla de  1080x1920" data-src="/fondo/90653.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90653.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1080x1920 - Fondo de pantalla de  1080x1920. Wallpaper de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90653" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390653&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90653" target="_blank" data-id="90653" data-download="/download/pastelerias-90653" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90657" data-fullimg="/fondo/90657.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90657" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390657&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90657" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90657" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90657" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90657.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90657.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo de pantalla HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90657" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390657&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90657" target="_blank" data-id="90657" data-download="/download/pastelerias-90657" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90666" data-fullimg="/fondo/90666.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90666" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390666&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90666" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90666" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90666" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90666.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90666.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo para computadora HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90666" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390666&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90666" target="_blank" data-id="90666" data-download="/download/pastelerias-90666" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90674" data-fullimg="/fondo/90674.jpg" data-or="1280x800" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90674" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390674&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90674" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90674" target="_blank">
+		                    <img class="thumb ads_popup" data-id="90674" alt="Fondo de pantalla de  1280x800" data-src="/fondo/90674.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90674.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1280x800 - Fondo de pantalla de  1280x800. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90674" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390674&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90674" target="_blank" data-id="90674" data-download="/download/pastelerias-90674" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90681" data-fullimg="/fondo/90681.jpg" data-or="1024x768" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90681" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390681&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90681" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90681" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90681" alt="Fondo de pantalla de  1024x768" data-src="/fondo/90681.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90681.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1024x768 - Fondo de pantalla de  1024x768. Fondo para computadora de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90681" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390681&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90681" target="_blank" data-id="90681" data-download="/download/pastelerias-90681" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="73698" data-fullimg="/fondo/73698.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#73698" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2373698&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-73698" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-73698" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="73698" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/73698.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/73698.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Imágen HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#73698" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2373698&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-73698" target="_blank" data-id="73698" data-download="/download/pastelerias-73698" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90687" data-fullimg="/fondo/90687.jpg" data-or="2560x1600" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90687" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390687&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90687" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90687" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90687" alt="Fondo de pantalla de  2560x1600" data-src="/fondo/90687.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90687.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">2560x1600 - Fondo de pantalla de  2560x1600. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90687" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390687&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90687" target="_blank" data-id="90687" data-download="/download/pastelerias-90687" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90694" data-fullimg="/fondo/90694.jpg" data-or="1600x900" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90694" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390694&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90694" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90694" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90694" alt="Fondo de pantalla de  1600x900" data-src="/fondo/90694.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90694.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1600x900 - Fondo de pantalla de  1600x900. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90694" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390694&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90694" target="_blank" data-id="90694" data-download="/download/pastelerias-90694" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90699" data-fullimg="/fondo/90699.jpg" data-or="1080x1920" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90699" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390699&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90699" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90699" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90699" alt="Fondo de pantalla de  1080x1920" data-src="/fondo/90699.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90699.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1080x1920 - Fondo de pantalla de  1080x1920. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90699" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390699&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90699" target="_blank" data-id="90699" data-download="/download/pastelerias-90699" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90700" data-fullimg="/fondo/90700.jpg" data-or="1920x1080" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90700" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390700&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90700" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90700" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90700" alt="Fondo de pantalla de  1920x1080" data-src="/fondo/90700.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90700.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1080 - Fondo de pantalla de  1920x1080. Fondo para computadora HD 1080p de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90700" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390700&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90700" target="_blank" data-id="90700" data-download="/download/pastelerias-90700" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90728" data-fullimg="/fondo/90728.jpg" data-or="1920x1200" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90728" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390728&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90728" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90728" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90728" alt="Fondo de pantalla de  1920x1200" data-src="/fondo/90728.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90728.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1920x1200 - Fondo de pantalla de  1920x1200. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90728" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390728&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90728" target="_blank" data-id="90728" data-download="/download/pastelerias-90728" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90733" data-fullimg="/fondo/90733.jpg" data-or="713x1334" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90733" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390733&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90733" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90733" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90733" alt="Fondo de pantalla de  713x1334" data-src="/fondo/90733.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90733.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">713x1334 - Fondo de pantalla de  713x1334. Fondo para móvil de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90733" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390733&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90733" target="_blank" data-id="90733" data-download="/download/pastelerias-90733" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90735" data-fullimg="/fondo/90735.jpg" data-or="1600x900" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90735" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390735&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90735" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90735" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90735" alt="Fondo de pantalla de  1600x900" data-src="/fondo/90735.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90735.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1600x900 - Fondo de pantalla de  1600x900. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90735" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390735&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90735" target="_blank" data-id="90735" data-download="/download/pastelerias-90735" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90739" data-fullimg="/fondo/90739.jpg" data-or="1600x1200" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90739" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390739&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90739" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90739" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90739" alt="Fondo de pantalla de  1600x1200" data-src="/fondo/90739.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90739.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1600x1200 - Fondo de pantalla de  1600x1200. Imágen de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90739" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390739&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90739" target="_blank" data-id="90739" data-download="/download/pastelerias-90739" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90741" data-fullimg="/fondo/90741.jpg" data-or="1280x800" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90741" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390741&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90741" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90741" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90741" alt="Fondo de pantalla de  1280x800" data-src="/fondo/90741.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90741.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">1280x800 - Fondo de pantalla de  1280x800. Wallpaper para escritorio de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90741" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390741&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90741" target="_blank" data-id="90741" data-download="/download/pastelerias-90741" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+				                <div id="90743" data-fullimg="/fondo/90743.jpg" data-or="3072x1920" data-fsb="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90743" data-tw="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390743&amp;text=pastelerias Wallpaper&amp;hashtags=wallpaper" data-pin="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" data-download="/descargar/pastelerias-90743" class="flexbox_item">
+		            <div class="wrapper">
+		                <a href="https://fondosmil.com/descargar/pastelerias-90743" target="_blank">
+		                    <img class=" thumb preload ads_popup" data-id="90743" alt="Fondo de pantalla de  3072x1920" data-src="/fondo/90743.jpg" src="./Fondos de pantalla de pastelerias - FondosMil_files/90743.jpg">
+		                    <div class="image_cap">
+		                        <span class="color_white">3072x1920 - Fondo de pantalla de  3072x1920. Fondo de pantalla de pastelerias.</span>
+		                    </div>
+		                </a>
+		            </div>
+		        </div>
+		        <div class="flexbox_item bottom_panel">
+		            <div class="flexbox">
+		                <div style="width: 100%">
+		                    <a rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90743" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390743&amp;text=pastelerias%20Wallpaper&amp;hashtags=pastelerias,fondo" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>		                </div>
+												                <div class="" style="flex-shrink: 0; text-align: end; align-self: flex-end">
+		                    <a href="https://fondosmil.com/descargar/pastelerias-90743" target="_blank" data-id="90743" data-download="/download/pastelerias-90743" class="ui small red button download_button ads_popup">
+		                                    <span class="ui inverted">
+		                                        <i class="download_icon icon"></i>
+		                                        <span class="download_text">Descargar</span>
+		                                    </span>
+		                    </a>
+		                </div>
+								
+		            </div>
+		        </div>
+		               
+		    </div>
+		<div class="on_complaint_modal_wrapper"></div>
+		<div class="on_complaint_modal_wrapper_2"></div>
+		<script>
+		  window.appCallbacks.push(function () {
+		    //complaint
+		    $('.complaint').on('click', function () {
+		      var button = $(this);
+		      $.post({url: button.data('resource-modal')}).success(function (data) {
+		        $('.on_complaint_modal_wrapper').html(data);
+		        var resource = $('.on_complaint_modal_wrapper').find('.on_complaint.modal #continue').data('continue');
+		        $('.on_complaint_modal_wrapper').find('.on_complaint.modal').modal({
+		          onApprove: function () {
+		            var form = $(this).find('form#complaint_form').serialize();
+		            $.post({url: resource, data: form}).success(function (data) {
+		              $('.on_complaint_modal_wrapper_2').html(data);
+		              $('.on_complaint_modal_wrapper_2').find('.on_complaint.modal').modal({
+		                onApprove: function () {
+		                  var modal = $(this);
+		                  var form = modal.find('form#complaint_form_2').serialize();
+		                  console.log(form)
+		                  var button = modal.find('#complaint_submit');
+		                  $.post({url: button.data('resource'), data: form}).success(function (data) {
+		                    modal.find('#complaint_form_wrapp').removeClass('error').addClass('success');
+		                    modal.modal('hide');
+		                  }).fail(function (data) {
+		                    if (data.status == 422) {
+		                      modal.find('#complaint_form_wrapp').addClass('error');
+		                      modal.find('.error.message > p').remove();
+		                      var errors = data.responseJSON;
+		                      $.each(errors, function (i, item) {
+		                        modal.find('.error.message').append('<p>' + item[0] + '</p>');
+		                      });
+		                    }
+		                  });
+
+
+		                  return false;
+		                },
+		                onHidden: function () {
+		                  $('div.dimmer.modals.page').remove(); // подчищает кешированные окна
+		                }
+		              }).modal('show');
+		            });
+		          }
+		        }).modal('show');
+		      });
+		    });
+		  });
+		</script>
+				<div class="ui large centered inline text loader collections" style="margin-top: 40px"></div>
+
+
+
+		    <div class="ui grid container" style="margin-top: 40px" id="recommended">
+		        <div class="row" style="padding: 0px;">
+		            <div class="center aligned column">
+		                <h2 class="ui centered aligned header _h2"></h2>
+		            </div>
+		        </div>
+		    </div>
+		    <style>
+		    /*web*/
+		    .column.collection_thumb {
+		        width: 338px;
+		    }
+
+		    .column.collection_thumb .h {
+		        font-size: 13px;
+		        font-weight: bold;
+		        line-height: 1;
+		        display: inline;
+		    }
+
+		    .other_widget .column.collection_thumb img {
+		        height: 210px;
+		        border-radius: 0px;
+		    }
+
+		    .column.collection_thumb .one.column.grid {
+		        padding-top: 6px;
+		    }
+		</style>
+		<div class="ui center aligned stackable three column grid container other_widget" style="margin-top: 20px">
+   
+					    </div>
+
+		    <div class="ui grid container" style="margin-top: 40px">
+		        <div class="row" style="padding-bottom: 0 !important;">
+		            <div class="center aligned sixteen wide column">
+		                <h2 class="ui center aligned color_black _h2"></h2>
+		            </div>
+		        </div>
+		        <div class="justified sixteen wide column" style="padding-bottom: 40px">
+		            <p id="guide" class="text h3_like_size">
+		            </p>
+		        </div>
+		    </div>
+
+
+		        <div class="small_divider"></div>
+        <div class="ui doubling grid container vertical_padded20 visible footer">
+    <div id="footer_container" class="row two column">
+        <div class="left aligned column">
+            <a class="color_black" href="https://fondosmil.com/contacto">Contacto</a>&nbsp;&nbsp;
+            <a class="color_black" href="https://fondosmil.com/terminos">Términos de Uso</a>&nbsp;&nbsp;
+            <a class="color_black" href="https://fondosmil.com/privacidad">Política de Privacidad</a>&nbsp;&nbsp;
+            <p class="footer-about"></p>
+        </div>
+        <div class="right aligned column">
+            <a class="color_black" href="https://fondosmil.com/">FondosMil</a> © 2022        </div>
+    </div>
+</div>        <a href="https://fondosmil.com/pastelerias#0" class="cd-top cd-is-visible cd-fade-out">
+            <i class="icon cd-top-arrow"></i>
+        </a>
+    </div>
+<script type="application/javascript" src="./Fondos de pantalla de pastelerias - FondosMil_files/app.js.descarga"></script>
+
+	<!-- Default Statcounter code for fondosmil
+	https://fondosmil.com -->
+	<script type="text/javascript">
+	var sc_project=12077743; 
+	var sc_invisible=1; 
+	var sc_security="863b2add"; 
+	var sc_https=1; 
+	</script>
+	<script type="text/javascript" src="./Fondos de pantalla de pastelerias - FondosMil_files/counter.js.descarga" async=""></script><iframe src="./Fondos de pantalla de pastelerias - FondosMil_files/container.html" style="visibility: hidden; display: none;"></iframe>
+	<noscript><div class="statcounter"><a title="Web Analytics"
+	href="https://statcounter.com/" target="_blank"><img
+	class="statcounter"
+	src="https://c.statcounter.com/12077743/0/863b2add/1/"
+	alt="Web Analytics"></a></div></noscript>
+	<!-- End of Statcounter Code -->
+
+    <div class="ui dimmer modals page active"><div id="adsdimmer" class="ui mini modal ads1 transition visible active" style="margin-top: 0px;display: undefined !important;">
+		    <div class="content" style="padding-top: 15px">
+		        <div class="flexbox column">
+		            <div class="flexbox_item">
+		                <div class="flexbox">
+		                    <div style="width: 100%;text-align: center;">
+		                        <div class="ui color_black" style="font-size: 24px; text-align: center; margin-bottom: 5px;">
+		                            Descargar fondo
+		                        </div>
+		                        <div class="ui color_black">
+		                                <span id="count" style="font-size: 14px;line-height: 17px;padding: 16px 0px 11px 0px;text-align: center;color: rgb(153, 153, 153); margin-bottom: 5px;"></span>
+		                        </div>
+		                    </div>
+		                    <i class="ui circular color_grey icon link remove" style="
+		                                    box-shadow: 0px 0px 5px 0px rgba(125,123,125,1);
+		                                    font-size: 16px;
+		                                    position: absolute;
+		                                    top: -12px;
+		                                    right: -12px;
+		                                    background-color: white;
+		                                    opacity: 1;"></i>
+
+		                </div>
+		            </div>
+		            <div class="flexbox_item content-center" style="margin-top: 10px; text-align: center;">
+	  	              	  	              <img src="./Fondos de pantalla de pastelerias - FondosMil_files/1588404277337_Diuudf.png" class="ziggy_863122" style="cursor: pointer; width: 340px;">
+		            </div>
+		            <div class="flexbox_item details" style="padding: 10px 0;">
+		                <div class="flexbox content-center" style="padding: 5px 0;">
+		                    <a class="fsl" href="https://fondosmil.com/descargar/pastelerias-90445">Descargar fondo</a>
+		                </div>
+		                <div class="flexbox content-center" style="padding: 10px 0 5px 0;">
+		                    <a id="fsb" rel="nofollow" href="http://www.facebook.com/sharer.php?u=https://wallpaperaccess.com/pastelerias#90445" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="facebook icon"></i>
+		                    </a>
+		                    <a id="pin" rel="nofollow" href="javascript:void((function()%7Bvar%20e=document.createElement(&#39;script&#39;);e.setAttribute(&#39;type&#39;,&#39;text/javascript&#39;);e.setAttribute(&#39;charset&#39;,&#39;UTF-8&#39;);e.setAttribute(&#39;src&#39;,&#39;https://assets.pinterest.com/js/pinmarklet.js?r=&#39;+Math.random()*99999999);document.body.appendChild(e)%7D)());" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="pinterest square icon"></i>
+		                    </a>
+		                    <a rel="nofollow" id="tw" href="https://twitter.com/share?url=https://wallpaperaccess.com/pastelerias%2390445&amp;text=pastelerias%20Wallpaper&amp;hashtags=wallpaper" target="_blank" class="ui icon basic button" style="margin-right: 5px">
+		                        <i class="twitter icon"></i>
+		                    </a>
+
+		                </div>
+		            </div>
+		        </div>
+		    </div>
+		</div></div></body></html>
